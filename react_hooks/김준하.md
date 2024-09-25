@@ -1,0 +1,184 @@
+# React Hooks란?
+
+**2018 React Conf**에서 처음 소개되어 **React v16.8**에 도입된 기술. 함수형 컴포넌트에서 **상태(state) 관리**와 **생명주기(life cycle)**를 다룰 수 있게 해준다.
+
+- useState()
+- useEffect()
+- useMemo()
+- useContext()
+- useRef()
+- useCallback()
+- ...
+
+# React Hooks가 나오게 된 배경
+
+React Hooks가 나오게 된 이유는 간단히 말하면
+
+> **Functional Component**에서 생명주기를 관리하고 싶어서
+
+이다.
+
+**Functional Component**가 나오기 전에는 **ECMAScript 6**에 도입된 class 문법을 사용한 **Class Component**를 사용해야 했다. 먼저 각각의 방식에 대해 간단히 알아보겠다.
+
+## Class Component
+
+앞서 언급한 것처럼, ECMAScript 6에 도입된 class 문법을 사용한 컴포넌트 표현 방식이다. React에서 제공하는 Component 클래스를 상속해야 한다. 또한 render() 함수를 호출해서 컴포넌트를 렌더링해줘야 한다.
+
+```javascript
+class App extends React.Component {
+  render() {
+    return <div>Hello World</div>;
+  }
+}
+
+export default App;
+```
+
+Class Component에서 상태를 관리하기 위해 **constructor**와 **this**를 활용해야 한다.
+
+```javascript
+constructor(props) {
+  super(props);
+  this.state = 0;
+}
+```
+
+생명주기를 관리하기 위해서는 Class Component에서만 사용할 수 있는 다양한 함수를 사용할 수 있다. 위에서 사용한 constructor와 render도 생명주기 메서드이다.
+
+- constructor()
+- render()
+- componentDidMount()
+- componentDidUpdate()
+- componentWillUnmount()
+- ...
+
+위 함수들을 이용해서 컴포넌트가 마운트 될 때, 업데이트 될 때 등 각각의 상황에서 컴포넌트가 갖고 있는 상태를 변경하거나 특정 작업을 수행할 수 있다.
+
+## Functional Component
+
+별도의 함수 없이 컴포넌트를 렌더링할 수 있다.
+
+```javascript
+function App() {
+  return <div>Hello World</div>;
+}
+
+export default App;
+```
+
+Class Component보다 간결한 코드로 컴포넌트를 렌더링할 수 있다. 코드가 간결해지면 자바스크립트의 컴파일러인 **Babel**을 통해 브라우저가 이해할 수 있는 코드로 변환할 때 코드의 양이 적어지기 때문에 더 높은 성능을 얻을 수 있다.
+
+하지만 Functional Component는 생명주기를 관리할 방법이 없다는 치명적인 단점이 존재했다. 그래서 짧고 간결한 코드로 작성할 수 있고, Class Component보다 높은 성능을 갖는 Functional Class에서 생명주기를 관리할 수 있도록 React Hooks가 나오게 되었다.
+
+# React Hooks로 얻게 된 점
+
+**useState**로 컴포넌트가 갖는 상태를, **useEffect**로 컴포넌트의 생명주기를 관리할 수 있게 되면서 기존의 Class Component를 사용할 때보다 간결한 코드를 작성할 수 있게 되었다. 또한 HOC 컴포넌트로 인해 발생하는 문제를 해결할 수 있게 되었다.
+
+## 간결해진 코드
+
+컴포넌트의 props를 받아서 컴포넌트의 상태값으로 사용하고, 그 값으로 fetch 함수를 부르며, props가 바뀔 때마다 상태값을 바꾸는 코드를 작성해야 한다고 하자. 그러면 Class Component는 다음과 같이 코드를 작성해야 한다.
+
+```javascript
+constructor(props) {
+  super(props);
+  this.state = {
+    books: [];
+  };
+}
+
+componentDidMount() {
+  fetch(`${baseUrl}/${this.props.id}`)
+    .then((response) => response.json())
+    .then(booksList => {
+        this.setState({ books: booksList });
+    });
+}
+
+componentDidUpdate(prevProps) {
+  if (this.props.id !== prevProps.id) {
+    fetch(`${baseUrl}/${this.props.id}`)
+    .then((response) => response.json())
+    .then(booksList => {
+        this.setState({ books: booksList });
+    });
+  }
+}
+```
+
+하지만 React Hooks를 사용한 Function Component는 훨씬 간결한 코드 작성이 가능하다.
+
+```javascript
+const [books, setBooks] = React.useState([]);
+
+useEffect(() => {
+  fetch(`${baseUrl}/${props.id}`)
+    .then((response) => response.json())
+    .then(booksList => {
+        setState({ books: booksList });
+    });
+}, [props.id]);
+```
+
+과장 조금 보태서 코드 양이 거의 10분의 1로 줄었다.
+뿐만 아니라 this를 사용하지 않기 때문에 this의 바인딩을 신경쓰지 않아도 된다는 장점 또한 가져갈 수 있다.
+
+## HOC 컴포넌트 대체
+
+Custom Hooks를 사용하면 **HOC**를 대체하여 HOC에서 발생할 수 있는 **Wrapper 지옥**을 해결할 수 있다.
+
+### HOC(Higher Order Component)란?
+
+재사용할 수 있는 코드를 **Wrapper Component**로 만든 것이다. 일반적으로 인증 체크나 권한 관리 등, 애플리케이션 전반에서 사용되는 컴포넌트의 상태나 생명주기와 관련된 로직을 HOC로 작성한다. 로직과 상관 없는 UI같은 부분은 parameter로 받아서 처리한다.
+
+하지만 많은 로직들이 겹쳐 있다면 **Wrapper 지옥**에 빠지는 문제가 발생할 수 있다.
+
+```HTML
+<LanguageHOC>
+  <ThemeHOC>
+  	<AuthHOC>
+  	  <ScrollHOC>
+  		<Page />
+  	  </ScrollHOC>
+	</AuthHOC>
+  </ThemeHOC>
+</LanguageHOC>
+```
+
+### Custom Hooks
+
+React에서 제공하는 React Hooks 외에도 직접 React Hooks를 만들어서 사용할 수 있다. 즉, Custom Hooks를 만들어서 그 내부에서 React Hooks를 사용할 수 있다. 그렇다면 상태나 생명주기와 관련된 로직들을 HOC가 아니라 Custom Hooks를 만들어서 사용할 수 있지 않을까?
+
+```javascript
+// useCustomHook.js
+...
+
+const [state, setState] = React.useState(0);
+
+useEffect(() => {
+  fetchApi();
+}, []);
+
+...
+
+return [state, setState];
+```
+
+이러한 방식으로 Custom Hooks를 만들 수 있고, HOC를 사용할 때보다 더 간결한 방식으로 코드를 재사용할 수 있다. Wrapper 지옥에 빠질 일도 없다!
+
+```
+// Page.jsx
+...
+useLanguageHook();
+useThemeHook();
+useAuthHook();
+useScrollHook();
+...
+```
+
+# 결론
+
+가장 중요한 것은 React Hooks를 통해 Functional Component에서 생명주기를 다룰 수 있다는 점인 것 같다. 그래서 React Hooks의 이점에 대해 내가 내린 결론은 다음과 같다. 
+
+> 1. Functional Component에서 생명주기를 다룰 수 있다.
+> 2. 간결한 코드로 생명주기를 다룰 수 있다.
+> 3. Custom Hooks를 만들어서 중복되는 생명주기 관련 로직을 HOC보다 직관적이고 간결하게처리할 수 있다.
